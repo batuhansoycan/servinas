@@ -15,7 +15,7 @@
 
 # next.js
 /.next/
-/out/
+# /out/ — deploy için GitHub'a push edilir
 
 # production
 /build
