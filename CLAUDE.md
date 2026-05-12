@@ -2,9 +2,17 @@
 
 # Servinas Web — Proje Hafızası
 
-## Kural: Bu Dosyayı Hep Güncelle
+## Kurallar
+
+### Bu Dosyayı Hep Güncelle
 Her yeni özellik, değişiklik veya karar sonrasında bu dosya güncellenmelidir.
 Bir şey yapıldıysa buraya yazılır. Hiçbir zaman eski bırakılmaz.
+
+### Deploy — Sadece Kullanıcı İstediğinde
+> **ASLA otomatik deploy yapma.** Build al, commit et, push et — ama VPS'e deploy adımlarını yalnızca kullanıcı açıkça "deploy et" dediğinde çalıştır.
+
+### Geliştirme Ortamı
+Değişiklikler **`http://localhost:3001`** üzerinden kontrol edilir. Dev server varsayılan olarak bu portta çalışır. Bir değişiklik yapıldığında kullanıcıya localhost:3001'de kontrol etmesini söyle.
 
 ---
 
@@ -128,17 +136,34 @@ servinas-web/
 
 ---
 
-## Deploy — TAMAMLANDI (2026-05-13)
+## Deploy
+
+> **Sadece kullanıcı "deploy et" dediğinde uygulanır.**
+
 **Sunucu:** 72.61.91.117 — nginx:alpine + Traefik SSL
 **GitHub:** https://github.com/batuhansoycan/servinas (master branch, `out/` dahil)
-**Site:** https://servinas.com — CANLI
+**Site:** https://servinas.com — CANLI (2026-05-13'ten beri)
 
-**Deploy yöntemi (Hostinger terminal):**
-1. `git clone https://github.com/batuhansoycan/servinas.git /tmp/servinas-web`
-2. `mkdir -p /var/www/servinas && cp -r /tmp/servinas-web/out/. /var/www/servinas/`
-3. `bash /tmp/servinas-web/scripts/setup-vps.sh`
+### Claude'un Yapacakları (her değişiklikte)
+```
+npm run build
+git add -A
+git commit -m "..."
+git push origin master
+```
 
-**Güncelleme için:** Local'de değişiklik yap → `npm run build` → commit + push → VPS'de adım 1-2'yi tekrarla + `docker compose restart servinas`
+### VPS Güncelleme Adımları (Hostinger terminal — SADECE kullanıcı istediğinde)
+```bash
+# İlk deploy ise:
+git clone https://github.com/batuhansoycan/servinas.git /tmp/servinas-web
+mkdir -p /var/www/servinas && cp -r /tmp/servinas-web/out/. /var/www/servinas/
+bash /tmp/servinas-web/scripts/setup-vps.sh
+
+# Güncelleme ise:
+cd /tmp && rm -rf servinas-web && git clone https://github.com/batuhansoycan/servinas.git servinas-web
+cp -r /tmp/servinas-web/out/. /var/www/servinas/
+docker compose -f /docker/n8n/docker-compose.yml restart servinas
+```
 
 ---
 

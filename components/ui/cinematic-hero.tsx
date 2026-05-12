@@ -13,6 +13,56 @@ if (typeof window !== "undefined") {
 const INJECTED_STYLES = `
   .gsap-reveal { visibility: hidden; }
 
+  .scroll-indicator {
+      position: fixed;
+      bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 24px));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+  }
+  .scroll-indicator.hidden { opacity: 0; }
+
+  .scroll-indicator-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+  }
+
+  .scroll-indicator-line {
+      width: 1px;
+      height: 52px;
+      background: rgba(255,255,255,0.1);
+      position: relative;
+      overflow: hidden;
+  }
+
+  .scroll-indicator-line::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, #F57C00, transparent);
+      animation: scroll-line 1.6s ease-in-out infinite;
+  }
+
+  @keyframes scroll-line {
+      0%   { top: -100%; }
+      100% { top: 100%; }
+  }
+
   .film-grain {
       position: absolute; inset: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 50; opacity: 0.04; mix-blend-mode: overlay;
@@ -237,6 +287,7 @@ export function CinematicHero({
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
@@ -247,6 +298,12 @@ export function CinematicHero({
       setSubmitting(false);
     }, 800);
   }
+
+  useEffect(() => {
+    const handleScroll = () => { if (window.scrollY > 80) setScrolled(true); };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -283,7 +340,7 @@ export function CinematicHero({
       gsap.set(".text-days", { autoAlpha: 1, clipPath: "inset(0 100% 0 0)" });
       gsap.set(".main-card", { y: window.innerHeight + 200, autoAlpha: 1 });
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge", ".phone-widget"], { autoAlpha: 0 });
-      gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: "blur(30px)" });
+      gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: isMobile ? "blur(10px)" : "blur(30px)" });
 
       const introTl = gsap.timeline({ delay: 0.3 });
       introTl
@@ -302,11 +359,11 @@ export function CinematicHero({
       });
 
       scrollTl
-        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: 2 }, 0)
+        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: isMobile ? "blur(8px)" : "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: 2 }, 0)
         .to(".main-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
         .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
         .fromTo(".mockup-scroll-wrapper",
-          { y: 300, z: -500, rotationX: 50, rotationY: -30, autoAlpha: 0, scale: 0.6 },
+          { y: isMobile ? 150 : 300, z: isMobile ? 0 : -500, rotationX: isMobile ? 15 : 50, rotationY: isMobile ? 0 : -30, autoAlpha: 0, scale: 0.6 },
           { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.5 }, "-=0.8"
         )
         .fromTo(".phone-widget", { y: 40, autoAlpha: 0, scale: 0.95 }, { y: 0, autoAlpha: 1, scale: 1, stagger: 0.15, ease: "back.out(1.2)", duration: 1.5 }, "-=1.5")
@@ -349,11 +406,15 @@ export function CinematicHero({
   return (
     <div
       ref={containerRef}
-      className={cn("relative w-screen h-screen overflow-hidden flex items-center justify-center bg-black text-white font-sans antialiased", className)}
-      style={{ perspective: "1500px" }}
+      className={cn("relative w-screen overflow-hidden flex items-center justify-center bg-black text-white font-sans antialiased", className)}
+      style={{ perspective: "1500px", height: "100dvh" }}
       {...props}
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
+      <div className={`scroll-indicator${scrolled ? " hidden" : ""}`} aria-hidden="true">
+        <span className="scroll-indicator-text">scroll</span>
+        <div className="scroll-indicator-line" />
+      </div>
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
@@ -404,6 +465,7 @@ export function CinematicHero({
                 onChange={e => setEmail(e.target.value)}
                 placeholder="E-posta adresin"
                 className="waitlist-input flex-1 px-5 py-4 rounded-2xl text-sm font-medium"
+                suppressHydrationWarning
               />
               <button
                 type="submit"
@@ -540,7 +602,7 @@ export function CinematicHero({
                 </div>
 
                 {/* Floating Badges */}
-                <div className="floating-badge absolute flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
+                <div className="floating-badge absolute hidden lg:flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
                   <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b from-orange-500/20 to-orange-900/10 flex items-center justify-center border border-orange-400/30 shadow-inner">
                     <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">🔧</span>
                   </div>
@@ -550,7 +612,7 @@ export function CinematicHero({
                   </div>
                 </div>
 
-                <div className="floating-badge absolute flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
+                <div className="floating-badge absolute hidden lg:flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
                   <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b from-amber-500/20 to-amber-900/10 flex items-center justify-center border border-amber-400/30 shadow-inner">
                     <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">📋</span>
                   </div>
