@@ -128,20 +128,22 @@ servinas-web/
 
 ---
 
-## Deploy Planı (VPS — Ertelendi)
-**Hedef:** 72.61.91.117 — nginx:alpine + mevcut Traefik SSL
+## Deploy — TAMAMLANDI (2026-05-13)
+**Sunucu:** 72.61.91.117 — nginx:alpine + Traefik SSL
+**GitHub:** https://github.com/batuhansoycan/servinas (master branch, `out/` dahil)
+**Site:** https://servinas.com — CANLI
 
-**Adımlar (hazır, bekliyor):**
-1. `scp -r out/. root@72.61.91.117:/tmp/servinas-out/`
-2. VPS'de: `mkdir -p /var/www/servinas && cp -r /tmp/servinas-out/. /var/www/servinas/`
-3. VPS'de: `scripts/setup-vps.sh` çalıştır (docker-compose'a servinas service ekler + `docker compose up -d`)
+**Deploy yöntemi (Hostinger terminal):**
+1. `git clone https://github.com/batuhansoycan/servinas.git /tmp/servinas-web`
+2. `mkdir -p /var/www/servinas && cp -r /tmp/servinas-web/out/. /var/www/servinas/`
+3. `bash /tmp/servinas-web/scripts/setup-vps.sh`
 
-**Not:** DNS zaten yönlendirilmiş (`servinas.com → 72.61.91.117`). Deploy yapılınca site anında canlıya geçer.
+**Güncelleme için:** Local'de değişiklik yap → `npm run build` → commit + push → VPS'de adım 1-2'yi tekrarla + `docker compose restart servinas`
 
 ---
 
 ## Bilinen Sınırlamalar / Yapılacaklar
-- [ ] Deploy bekliyor (VPS SSH erişimi çözülünce)
+- [x] Deploy tamamlandı — https://servinas.com canlıda
 - [ ] Email waitlist formu henüz gerçek bir backend'e bağlı değil (setTimeout simülasyonu)
 - [ ] `prefers-reduced-motion` desteği yok (erişilebilirlik)
 - [ ] App Store / Google Play linkleri placeholder — uygulama yayınlanınca güncellenecek
