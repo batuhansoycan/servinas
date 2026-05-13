@@ -3,9 +3,13 @@ set -e
 
 COMPOSE_FILE="/docker/n8n/docker-compose.yml"
 WEB_DIR="/var/www/servinas"
+NGINX_CONF="/var/www/servinas-nginx.conf"
 
 echo "→ Web dizini oluşturuluyor..."
 mkdir -p "$WEB_DIR"
+
+echo "→ Nginx config kopyalanıyor..."
+cp "$(dirname "$0")/../nginx/default.conf" "$NGINX_CONF"
 
 echo "→ docker-compose kontrol ediliyor..."
 if grep -q "container_name: servinas" "$COMPOSE_FILE" 2>/dev/null; then
@@ -20,6 +24,7 @@ else
     restart: always
     volumes:
       - /var/www/servinas:/usr/share/nginx/html:ro
+      - /var/www/servinas-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.servinas.rule=Host(`servinas.com`) || Host(`www.servinas.com`)"
