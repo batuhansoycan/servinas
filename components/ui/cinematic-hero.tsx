@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
@@ -252,6 +253,33 @@ const INJECTED_STYLES = `
   .orange-glow {
       box-shadow: 0 0 20px rgba(245,124,0,0.3), 0 0 40px rgba(245,124,0,0.1);
   }
+
+  .stat-reveal-1, .stat-reveal-2, .stat-reveal-3 {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+      visibility: hidden;
+      opacity: 0;
+  }
+
+  .s-burst-icon {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+  }
+
+  .burst-ring {
+      position: absolute;
+      border-radius: 50%;
+      visibility: hidden;
+      opacity: 0;
+  }
 `;
 
 export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -284,6 +312,7 @@ export function CinematicHero({
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>(0);
+
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -307,13 +336,14 @@ export function CinematicHero({
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (window.scrollY > window.innerHeight * 2) return;
       cancelAnimationFrame(requestRef.current);
       requestRef.current = requestAnimationFrame(() => {
-        if (mainCardRef.current && mockupRef.current) {
+        if (mainCardRef.current) {
           const rect = mainCardRef.current.getBoundingClientRect();
           mainCardRef.current.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
           mainCardRef.current.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+        }
+        if (mockupRef.current && window.scrollY <= window.innerHeight * 2) {
           const xVal = (e.clientX / window.innerWidth - 0.5) * 2;
           const yVal = (e.clientY / window.innerHeight - 0.5) * 2;
           gsap.to(mockupRef.current, {
@@ -341,6 +371,7 @@ export function CinematicHero({
       gsap.set(".main-card", { y: window.innerHeight + 200, autoAlpha: 1 });
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge", ".phone-widget"], { autoAlpha: 0 });
       gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: isMobile ? "blur(10px)" : "blur(30px)" });
+      gsap.set([".stat-reveal-1", ".stat-reveal-2", ".stat-reveal-3", ".s-burst-icon", ".burst-ring"], { autoAlpha: 0 });
 
       const introTl = gsap.timeline({ delay: 0.3 });
       introTl
@@ -351,7 +382,7 @@ export function CinematicHero({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=6000",
+          end: "+=8500",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -362,6 +393,22 @@ export function CinematicHero({
         .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: isMobile ? "blur(8px)" : "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: 2 }, 0)
         .to(".main-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
         .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
+
+        // Stat 1
+        .fromTo(".stat-reveal-1", { y: 100, autoAlpha: 0, scale: 0.85 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.8, ease: "expo.out" })
+        .to(".stat-reveal-1", { y: -100, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, "+=0.5")
+        // Stat 2
+        .fromTo(".stat-reveal-2", { y: 100, autoAlpha: 0, scale: 0.85 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.8, ease: "expo.out" })
+        .to(".stat-reveal-2", { y: -100, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, "+=0.5")
+        // Stat 3
+        .fromTo(".stat-reveal-3", { y: 100, autoAlpha: 0, scale: 0.85 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.8, ease: "expo.out" })
+        .to(".stat-reveal-3", { y: -100, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, "+=0.5")
+        // S burst
+        .fromTo(".s-burst-icon", { scale: 0, autoAlpha: 0, filter: "blur(50px)" }, { scale: 1, autoAlpha: 1, filter: "blur(0px)", duration: 1, ease: "back.out(1.6)" })
+        .fromTo(".burst-ring", { scale: 1, autoAlpha: 0.9 }, { scale: 7, autoAlpha: 0, duration: 1.8, stagger: 0.25, ease: "power2.out" }, "-=0.6")
+        .to(".s-burst-icon", { scale: 20, autoAlpha: 0, filter: "blur(40px)", duration: 1, ease: "power3.in" }, "-=1.2")
+        .to({}, { duration: 0.3 })
+
         .fromTo(".mockup-scroll-wrapper",
           { y: isMobile ? 150 : 300, z: isMobile ? 0 : -500, rotationX: isMobile ? 15 : 50, rotationY: isMobile ? 0 : -30, autoAlpha: 0, scale: 0.6 },
           { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.5 }, "-=0.8"
@@ -436,6 +483,15 @@ export function CinematicHero({
 
       {/* CTA Section */}
       <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 gsap-reveal pointer-events-auto will-change-transform">
+        <div className="hidden md:block mb-10">
+          <Image
+            src="/logo-stacked.png"
+            alt="Servinas"
+            width={110}
+            height={71}
+            className="object-contain mx-auto"
+          />
+        </div>
         <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-orange-500/20 bg-orange-500/5">
           <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
           <span className="text-orange-400 text-xs font-bold tracking-widest uppercase">Yakında Geliyor</span>
@@ -512,6 +568,35 @@ export function CinematicHero({
           className="main-card premium-depth-card relative overflow-hidden gsap-reveal flex items-center justify-center pointer-events-auto w-[92vw] md:w-[85vw] h-[92vh] md:h-[85vh] rounded-[32px] md:rounded-[40px]"
         >
           <div className="card-sheen" aria-hidden="true" />
+
+          {/* Interactive fullscreen overlay */}
+          <div className="absolute inset-0 z-20 flex items-center justify-center overflow-hidden pointer-events-none" aria-hidden="true">
+            {/* Stat 1 */}
+            <div className="stat-reveal-1">
+              <span className="text-[2.8rem] md:text-[6rem] lg:text-[8rem] font-black tracking-tighter leading-none text-orange-500/90">Aracın takipte.</span>
+              <span className="text-white/25 text-[10px] md:text-sm tracking-[0.35em] uppercase">Bakım · Yakıt · Servis</span>
+            </div>
+            {/* Stat 2 */}
+            <div className="stat-reveal-2">
+              <span className="text-[2.8rem] md:text-[6rem] lg:text-[9rem] font-black tracking-tighter leading-none text-white/90">48.750+</span>
+              <span className="text-orange-400/50 text-[10px] md:text-sm tracking-[0.35em] uppercase">Km Takip Edildi</span>
+            </div>
+            {/* Stat 3 */}
+            <div className="stat-reveal-3">
+              <span className="text-[2.8rem] md:text-[6rem] lg:text-[8rem] font-black tracking-tighter leading-none text-white/90">Hazır mısın?</span>
+              <span className="text-orange-400/50 text-[10px] md:text-sm tracking-[0.35em] uppercase">Yakında geliyor</span>
+            </div>
+            {/* S burst icon */}
+            <div className="s-burst-icon">
+              <div className="relative w-36 h-36 md:w-56 md:h-56 lg:w-72 lg:h-72">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-icon.png" alt="" className="w-full h-full object-contain" style={{ filter: "drop-shadow(0 0 50px rgba(245,124,0,0.9)) drop-shadow(0 0 100px rgba(245,124,0,0.5))" }} />
+                <div className="burst-ring" style={{ position: "absolute", inset: "-16px", border: "2px solid rgba(245,124,0,0.7)" }} />
+                <div className="burst-ring" style={{ position: "absolute", inset: "-16px", border: "1px solid rgba(245,124,0,0.4)" }} />
+                <div className="burst-ring" style={{ position: "absolute", inset: "-16px", border: "1px solid rgba(245,124,0,0.2)" }} />
+              </div>
+            </div>
+          </div>
 
           <div className="relative w-full h-full max-w-7xl mx-auto px-4 lg:px-12 flex flex-col justify-evenly lg:grid lg:grid-cols-3 items-center lg:gap-8 z-10 py-6 lg:py-0">
 

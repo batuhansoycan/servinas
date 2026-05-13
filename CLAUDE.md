@@ -54,15 +54,21 @@ Araç bakım ve servis takip uygulaması için "yakında geliyor" sayfası + ema
 ```
 servinas-web/
 ├── app/
-│   ├── globals.css         # Tailwind 4 import + CSS değişkenleri
-│   ├── layout.tsx          # HTML lang="tr", metadata, Geist font
-│   └── page.tsx            # Ana sayfa → sadece <CinematicHero /> render eder
+│   ├── globals.css              # Tailwind 4 import + CSS değişkenleri
+│   ├── icon.png                 # Favicon — trimmed turuncu S ikonu (512x512)
+│   ├── favicon.ico              # Favicon — trimmed turuncu S ikonu (64x64)
+│   ├── layout.tsx               # HTML lang="tr", metadata, Geist font + Navbar
+│   └── page.tsx                 # Ana sayfa → sadece <CinematicHero /> render eder
 ├── components/
 │   └── ui/
 │       └── cinematic-hero.tsx   # Ana hero component (GSAP scroll animasyonu)
 ├── lib/
-│   └── utils.ts            # cn() utility (clsx + tailwind-merge)
-└── public/                 # Statik dosyalar (henüz boş)
+│   └── utils.ts                 # cn() utility (clsx + tailwind-merge)
+└── public/
+    ├── logo-horizontal.png      # S ikon + beyaz/turuncu "Servinas" yatay (servinas4)
+    ├── logo-stacked.png         # S ikon üstte + "Servinas" altta (servinas7)
+    ├── logo-white-text.png      # Sadece beyaz/turuncu metin, trim edilmiş (servinas3)
+    └── logo-icon.png            # Sadece turuncu S ikonu, trim edilmiş (servinas1)
 ```
 
 ---
@@ -77,13 +83,14 @@ servinas-web/
 ### Adım 2 — CinematicHero Component
 `components/ui/cinematic-hero.tsx` oluşturuldu. Özellikler:
 
-**Animasyon akışı (GSAP ScrollTrigger, 6000px pin):**
+**Animasyon akışı (GSAP ScrollTrigger, 8500px pin):**
 1. Giriş: "Aracının her şeyi," blur'dan reveal, "tek yerde." clip-path sweep
 2. Scroll: Hero text blur + scale → Kart yukarı yükselir → Full ekran açılır
-3. Kart içi: iPhone mockup 3D giriş → Widget'lar → Floating badge'ler → Sol/sağ metinler
-4. Çıkış: İçerikler kaybolur → Kart küçülür → CTA bölümü ortaya çıkar → Kart yukarı çıkar
+3. **İnteraktif faz (yeni):** Kart tam ekranda 3 stat sırayla belirir ("Aracın takipte." / "48.750+" / "Hazır mısın?") → turuncu S ikonu scale ile patlar ve genişler
+4. Kart içi: iPhone mockup 3D giriş → Widget'lar → Floating badge'ler → Sol/sağ metinler
+5. Çıkış: İçerikler kaybolur → Kart küçülür → CTA bölümü ortaya çıkar → Kart yukarı çıkar
 
-**Mouse parallax:** iPhone mockup, fare hareketine göre 12° 3D tilt yapar (requestAnimationFrame ile optimize)
+**Mouse parallax:** iPhone mockup, fare hareketine göre 12° 3D tilt yapar — sadece scroll başındaki fazda aktif (CSS değişkenleri `--mouse-x`/`--mouse-y` her zaman güncellenir)
 
 **iPhone Mockup içeriği (araç temalı):**
 - Header: "Araçlarım / Dashboard" + "AY" avatar
@@ -107,6 +114,7 @@ servinas-web/
 - Title: "Servinas — Aracının her şeyi, tek yerde."
 - Description: Türkçe SEO metni
 - OpenGraph metadata eklendi
+- **Navbar eklendi:** Fixed top, z-50, `logo-horizontal.png` (130px genişlik)
 
 ### Adım 4 — Global CSS
 `app/globals.css` güncellendi:
@@ -169,8 +177,13 @@ docker compose -f /docker/n8n/docker-compose.yml restart servinas
 
 ## Bilinen Sınırlamalar / Yapılacaklar
 - [x] Deploy tamamlandı — https://servinas.com canlıda
+- [x] Mobil optimizasyonlar tamamlandı (100dvh, blur azaltma, badge gizleme, safe area)
+- [x] Scroll göstergesi eklendi (dikey SCROLL yazısı + turuncu animasyonlu çizgi)
+- [x] Favicon güncellendi — turuncu S ikonu (sharp ile trim edildi)
+- [x] Navbar eklendi — yatay Servinas logosu, fixed top
+- [x] CTA'ya logo eklendi — stacked logo, sadece masaüstünde görünür
+- [x] İnteraktif fullscreen kart fazı eklendi — stat reveal + S burst animasyonu
 - [ ] Email waitlist formu henüz gerçek bir backend'e bağlı değil (setTimeout simülasyonu)
 - [ ] `prefers-reduced-motion` desteği yok (erişilebilirlik)
 - [ ] App Store / Google Play linkleri placeholder — uygulama yayınlanınca güncellenecek
 - [ ] OG image (sosyal medya önizleme görseli) henüz yok
-- [ ] Favicon Servinas logosu değil (varsayılan Next.js)
