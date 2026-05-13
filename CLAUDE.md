@@ -22,7 +22,7 @@ Araç bakım ve servis takip uygulaması için "yakında geliyor" sayfası + ema
 
 **Domain:** servinas.com
 **Şirket:** Westecute Yazılım Ltd. Şti.
-**Sosyal medya:** @servinasapp
+**Sosyal medya:** instagram.com/servinasapp · x.com/servinasapp
 
 > ÖNEMLİ: Bu proje `servinas/mobile` ile tamamen ayrıdır.
 > Mobile projesine (`C:\Users\batuh\Projects\servinas\mobile`) kesinlikle dokunulmaz.
@@ -95,10 +95,12 @@ servinas-web/
 **iPhone Mockup içeriği (araç temalı):**
 - Header: "Araçlarım / Dashboard" + "AY" avatar
 - Turuncu progress ring: km sayacı (0 → 48.750 animasyonlu)
-- Widget 1: Yağ Değişimi (turuncu ikon)
-- Widget 2: Muayene (amber ikon)
+- Widget 1: Turuncu ikon + placeholder barlar + sağda `"Yağ"` etiketi (turuncu)
+- Widget 2: Amber ikon + placeholder barlar + sağda `"Muayene"` etiketi (amber)
 - Floating badge sol: 🔧 "Yağ Değişimi — 500 km kaldı"
 - Floating badge sağ: 📋 "Servis Randevusu — Yarın 10:00"
+
+> **NOT:** Widget içeriği geçici placeholder. Gerçek metin ("Yağ Değişimi / 500 km kaldı") denendi ama beğenilmedi, placeholder korundu.
 
 **CTA Bölümü (scroll sonunda):**
 - "Yakında Geliyor" pill badge (turuncu, pulse animasyonlu)
@@ -106,6 +108,7 @@ servinas-web/
 - Açıklama metni (Türkçe)
 - **Email waitlist formu:** input + "Erken Erişim Al" butonu → submit sonrası başarı mesajı
 - **App Store & Google Play butonları:** disabled, hover'da turuncu "Yakında" overlay'i gösterir
+- **Sosyal medya linkleri:** Instagram ve X ikonları (`https://instagram.com/servinasapp`, `https://x.com/servinasapp`)
 - Footer: © 2026 Servinas — Westecute Yazılım Ltd. Şti.
 
 ### Adım 3 — Layout & Metadata
@@ -131,6 +134,24 @@ servinas-web/
 **Fix:**
 1. `globals.css`: `html` → `overflow-y: auto`, `body` → `overflow-y: visible` (body'nin scroll container olmasını engeller, scroll window'a taşınır)
 2. `cinematic-hero.tsx`: `ScrollTrigger.normalizeScroll(true)` eklendi (farklı tarayıcı/ortamlarda scroll normalizasyonu)
+
+---
+
+### Adım 7 — Görsel İyileştirmeler (2026-05-13)
+
+**Aurora arka plan:** `cinematic-hero.tsx` hero section'ına 4 animasyonlu radial gradient blob eklendi (`.aurora-1` → `.aurora-4`). Her biri farklı hız ve yönde hareket eden `@keyframes` ile. Hero section'ın `z-0` katmanında, `pointer-events: none`.
+
+**CTA animasyonlu glow:** CTA bölümüne iki katmanlı radial gradient glow eklendi — dış katman `cta-glow-pulse` keyframe ile pulse animasyonu yapar (4s ease-in-out infinite).
+
+**Sosyal medya linkleri:** `@servinasapp` yazısı kaldırıldı, SVG ikonlu Instagram ve X linkleri eklendi.
+
+**Mouse parallax düzeltmesi:** Spotlight özelliği kaldırıldıktan sonra `--mouse-x`/`--mouse-y` CSS değişkenleri her zaman güncellenir, mockup 3D tilt sadece erken scroll fazında aktif.
+
+**Denenen ama geri alınan şeyler:**
+- Lenis smooth scroll: GSAP `pin: true` + React Strict Mode ile çakıştı (`removeChild` hatası), kaldırıldı
+- Mouse spotlight efekti: eklendi sonra kullanıcı beğenmedi, kaldırıldı
+- Widget gerçek metin: "Yağ Değişimi / 500 km kaldı" eklendi, beğenilmedi, placeholder'a döndürüldü
+- "tek yerde." yazısı neon efekti ve çeşitli glow denemeleri: hepsi geri alındı, sade gradient korundu
 
 ---
 
@@ -183,7 +204,11 @@ docker compose -f /docker/n8n/docker-compose.yml restart servinas
 - [x] Navbar eklendi — yatay Servinas logosu, fixed top
 - [x] CTA'ya logo eklendi — stacked logo, sadece masaüstünde görünür
 - [x] İnteraktif fullscreen kart fazı eklendi — stat reveal + S burst animasyonu
+- [x] Aurora arka plan eklendi — 4 animasyonlu blob
+- [x] CTA glow animasyonu eklendi
+- [x] Sosyal medya linkleri eklendi — Instagram + X ikonları
 - [ ] Email waitlist formu henüz gerçek bir backend'e bağlı değil (setTimeout simülasyonu)
 - [ ] `prefers-reduced-motion` desteği yok (erişilebilirlik)
 - [ ] App Store / Google Play linkleri placeholder — uygulama yayınlanınca güncellenecek
 - [ ] OG image (sosyal medya önizleme görseli) henüz yok
+- [ ] Canlı site güncellenmedi — aurora, CTA glow, sosyal linkler henüz deploy edilmedi

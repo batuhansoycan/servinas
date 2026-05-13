@@ -103,8 +103,8 @@ const INJECTED_STYLES = `
       -webkit-text-fill-color: transparent;
       background-clip: text;
       transform: translateZ(0);
-      filter: drop-shadow(0px 8px 20px rgba(245,124,0,0.4));
   }
+
 
   .text-card-silver-matte {
       background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
@@ -254,6 +254,70 @@ const INJECTED_STYLES = `
       box-shadow: 0 0 20px rgba(245,124,0,0.3), 0 0 40px rgba(245,124,0,0.1);
   }
 
+  .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform, opacity;
+  }
+  .aurora-1 {
+      width: 900px; height: 900px;
+      top: -300px; left: -200px;
+      background: radial-gradient(circle, rgba(245,124,0,0.18) 0%, rgba(245,100,0,0.06) 50%, transparent 70%);
+      filter: blur(80px);
+      animation: aurora1 16s ease-in-out infinite;
+  }
+  .aurora-2 {
+      width: 700px; height: 700px;
+      bottom: -150px; right: -150px;
+      background: radial-gradient(circle, rgba(255,90,0,0.14) 0%, rgba(245,124,0,0.05) 50%, transparent 70%);
+      filter: blur(100px);
+      animation: aurora2 20s ease-in-out infinite;
+  }
+  .aurora-3 {
+      width: 500px; height: 500px;
+      top: 35%; left: 40%;
+      background: radial-gradient(circle, rgba(255,154,60,0.10) 0%, transparent 65%);
+      filter: blur(70px);
+      animation: aurora3 12s ease-in-out infinite;
+  }
+  .aurora-4 {
+      width: 350px; height: 350px;
+      top: 10%; right: 15%;
+      background: radial-gradient(circle, rgba(245,124,0,0.12) 0%, transparent 65%);
+      filter: blur(60px);
+      animation: aurora4 9s ease-in-out infinite;
+  }
+  @keyframes aurora1 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
+      25%  { transform: translate(150px, 100px) scale(1.15); opacity: 0.85; }
+      50%  { transform: translate(80px, 200px) scale(0.9); opacity: 1; }
+      75%  { transform: translate(-80px, 120px) scale(1.08); opacity: 0.9; }
+  }
+  @keyframes aurora2 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
+      30%  { transform: translate(-160px, -100px) scale(1.2); opacity: 0.8; }
+      60%  { transform: translate(-60px, -180px) scale(0.88); opacity: 1; }
+      80%  { transform: translate(100px, -60px) scale(1.1); opacity: 0.85; }
+  }
+  @keyframes aurora3 {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+      40%  { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+      70%  { transform: translate(-60%, -40%) scale(1.2); opacity: 0.8; }
+  }
+  @keyframes aurora4 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+      50%  { transform: translate(-80px, 60px) scale(1.3); opacity: 1; }
+  }
+
+  @keyframes cta-glow-pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50%  { opacity: 1; transform: scale(1.08); }
+  }
+  .cta-glow-inner {
+      animation: cta-glow-pulse 4s ease-in-out infinite;
+  }
+
   .stat-reveal-1, .stat-reveal-2, .stat-reveal-3 {
       position: absolute;
       display: flex;
@@ -384,7 +448,7 @@ export function CinematicHero({
           start: "top top",
           end: "+=8500",
           pin: true,
-          scrub: 1,
+          scrub: isMobile ? 0.5 : 1,
           anticipatePin: 1,
         },
       });
@@ -463,13 +527,16 @@ export function CinematicHero({
         <div className="scroll-indicator-line" />
       </div>
       <div className="film-grain" aria-hidden="true" />
-      <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
-      {/* Subtle orange radial glow top-left */}
-      <div className="absolute top-0 left-0 w-[600px] h-[600px] pointer-events-none z-0"
-        style={{ background: "radial-gradient(circle at 0% 0%, rgba(245,124,0,0.08) 0%, transparent 65%)" }}
-        aria-hidden="true"
-      />
+      {/* Aurora background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="aurora-blob aurora-1" />
+        <div className="aurora-blob aurora-2" />
+        <div className="aurora-blob aurora-3" />
+        <div className="aurora-blob aurora-4" />
+      </div>
+
+      <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
       {/* Hero Texts */}
       <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform">
@@ -483,6 +550,13 @@ export function CinematicHero({
 
       {/* CTA Section */}
       <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 gsap-reveal pointer-events-auto will-change-transform">
+        {/* CTA background glow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="cta-glow-inner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(245,124,0,0.10) 0%, rgba(245,124,0,0.04) 40%, transparent 70%)" }} />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,154,60,0.08) 0%, transparent 60%)", filter: "blur(30px)" }} />
+        </div>
         <div className="hidden md:block mb-10">
           <Image
             src="/logo-stacked.png"
@@ -556,7 +630,26 @@ export function CinematicHero({
           </button>
         </div>
 
-        <p className="mt-8 text-white/20 text-xs">
+        {/* Social */}
+        <div className="flex items-center gap-4 mt-10 mb-2">
+          <a href="https://instagram.com/servinasapp" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 text-white/30 hover:text-white/70 transition-colors duration-300 group">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+            </svg>
+            <span className="text-[11px] tracking-wider">Instagram</span>
+          </a>
+          <div className="w-px h-3 bg-white/10" />
+          <a href="https://x.com/servinasapp" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 text-white/30 hover:text-white/70 transition-colors duration-300 group">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.261 5.632L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+            </svg>
+            <span className="text-[11px] tracking-wider">X</span>
+          </a>
+        </div>
+
+        <p className="mt-4 text-white/15 text-xs">
           © 2026 Servinas — Westecute Yazılım Ltd. Şti.
         </p>
       </div>
