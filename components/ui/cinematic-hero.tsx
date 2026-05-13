@@ -258,7 +258,6 @@ const INJECTED_STYLES = `
       position: absolute;
       border-radius: 50%;
       pointer-events: none;
-      will-change: transform, opacity;
   }
   .aurora-1 {
       width: 900px; height: 900px;
@@ -287,6 +286,12 @@ const INJECTED_STYLES = `
       background: radial-gradient(circle, rgba(245,124,0,0.12) 0%, transparent 65%);
       filter: blur(60px);
       animation: aurora4 9s ease-in-out infinite;
+  }
+  @media (max-width: 767px) {
+      .aurora-1 { filter: blur(35px); animation-duration: 24s; opacity: 0.5; }
+      .aurora-2 { filter: blur(40px); animation-duration: 30s; opacity: 0.4; }
+      .aurora-3 { filter: blur(30px); animation-duration: 18s; opacity: 0.35; }
+      .aurora-4 { filter: blur(25px); animation-duration: 14s; opacity: 0.3; }
   }
   @keyframes aurora1 {
       0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
@@ -529,7 +534,7 @@ export function CinematicHero({
       <div className="film-grain" aria-hidden="true" />
 
       {/* Aurora background */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" style={{ contain: "paint" }} aria-hidden="true">
         <div className="aurora-blob aurora-1" />
         <div className="aurora-blob aurora-2" />
         <div className="aurora-blob aurora-3" />
