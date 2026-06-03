@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.normalizeScroll(true);
+  gsap.ticker.lagSmoothing(false);
 }
 
 const INJECTED_STYLES = `
@@ -77,6 +78,7 @@ const INJECTED_STYLES = `
           linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
       mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+      will-change: filter, transform, opacity;
   }
 
   .text-3d-matte {
@@ -550,7 +552,7 @@ export function CinematicHero({
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-60" aria-hidden="true" />
 
       {/* Hero Texts */}
-      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform">
+      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4" style={{ willChange: "filter, transform, opacity" }}>
         <h1 className="text-track gsap-reveal text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
           {tagline1}
         </h1>
