@@ -258,6 +258,7 @@ const INJECTED_STYLES = `
       position: absolute;
       border-radius: 50%;
       pointer-events: none;
+      will-change: transform, opacity;
   }
   .aurora-1 {
       width: 900px; height: 900px;
@@ -349,6 +350,12 @@ const INJECTED_STYLES = `
       visibility: hidden;
       opacity: 0;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+      .aurora-1, .aurora-2, .aurora-3, .aurora-4,
+      .cta-glow-inner { animation-play-state: paused !important; }
+      .scroll-indicator-line::after { animation: none !important; }
+  }
 `;
 
 export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -381,6 +388,8 @@ export function CinematicHero({
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>(0);
+  const quickRotYRef = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
+  const quickRotXRef = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
 
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -413,14 +422,12 @@ export function CinematicHero({
           mainCardRef.current.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
         }
         if (mockupRef.current && window.scrollY <= window.innerHeight * 2) {
+          if (!quickRotYRef.current) quickRotYRef.current = gsap.quickTo(mockupRef.current, "rotationY", { ease: "power3.out", duration: 1.2 });
+          if (!quickRotXRef.current) quickRotXRef.current = gsap.quickTo(mockupRef.current, "rotationX", { ease: "power3.out", duration: 1.2 });
           const xVal = (e.clientX / window.innerWidth - 0.5) * 2;
           const yVal = (e.clientY / window.innerHeight - 0.5) * 2;
-          gsap.to(mockupRef.current, {
-            rotationY: xVal * 12,
-            rotationX: -yVal * 12,
-            ease: "power3.out",
-            duration: 1.2,
-          });
+          quickRotYRef.current(xVal * 12);
+          quickRotXRef.current(-yVal * 12);
         }
       });
     };
@@ -441,6 +448,8 @@ export function CinematicHero({
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge", ".phone-widget"], { autoAlpha: 0 });
       gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: isMobile ? "blur(10px)" : "blur(30px)" });
       gsap.set([".stat-reveal-1", ".stat-reveal-2", ".stat-reveal-3", ".s-burst-icon", ".burst-ring"], { autoAlpha: 0 });
+
+      const counterEl = containerRef.current?.querySelector<HTMLElement>(".counter-val");
 
       const introTl = gsap.timeline({ delay: 0.3 });
       introTl
@@ -484,13 +493,10 @@ export function CinematicHero({
         )
         .fromTo(".phone-widget", { y: 40, autoAlpha: 0, scale: 0.95 }, { y: 0, autoAlpha: 1, scale: 1, stagger: 0.15, ease: "back.out(1.2)", duration: 1.5 }, "-=1.5")
         .to(".progress-ring", { strokeDashoffset: 80, duration: 2, ease: "power3.inOut" }, "-=1.2")
-        .to(".counter-val", { innerHTML: metricValue.toLocaleString("tr-TR"), duration: 2, ease: "expo.out",
+        .to(".counter-val", { duration: 2, ease: "expo.out",
           onUpdate: function() {
-            const el = document.querySelector(".counter-val");
-            if (el) {
-              const progress = this.progress();
-              const val = Math.round(metricValue * progress);
-              el.innerHTML = val.toLocaleString("tr-TR");
+            if (counterEl) {
+              counterEl.innerHTML = Math.round(metricValue * this.progress()).toLocaleString("tr-TR");
             }
           }
         }, "-=2.0")
