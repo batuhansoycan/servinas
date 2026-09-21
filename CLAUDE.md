@@ -155,6 +155,32 @@ servinas-web/
 
 ---
 
+### Adım 8 — Performans (Görsel Kayıpsız) (2026-09-16)
+**Kural:** Kullanıcı görüntü kalitesinde hiçbir düşüş istemiyor. Blur'u opacity ile değiştirmek, efekt kaldırmak/azaltmak gibi görünümü değiştiren optimizasyonlar yapılmaz; öyle bir şey gerekirse önce kullanıcıya sorulur.
+
+**Test kuralı:** Görsel doğrulama sadece ileri scroll ile yapılmaz — her değişiklikte **geri scroll** da test edilir (S burst hatası sadece geri dönüşte görünüyordu).
+
+`cinematic-hero.tsx` değişiklikleri (görünüm birebir aynı):
+- `normalizeScroll` sadece dokunmatik cihazlarda (`ScrollTrigger.isTouch === 1`). Masaüstünde native scroll.
+- ~~sheen değişkenlerini sadece `.card-sheen`'e yazma, kart fullscreen iken aurora/grid gizleme, CTA `will-change: filter`, sayaç `textContent`~~ — ölçülmemiş mikro optimizasyonlardı, S burst hatası araştırılırken **geri alındı** (hatanın sebebi değillerdi ama gereksiz risk). Tekrar denenecekse önce ölçülmeli.
+
+**S burst → telefon geçişindeki takılma (2026-09-17):** Ölçümle bulundu (Edge + RTX 3060, 1440x900, trace + efektleri tek tek kapatma). Sebep blur/backdrop/gölge değil; telefon mockup'ı **ilk kez** çizilirken GPU'nun tek seferlik hazırlık işi (86ms'lik tek GPU görevi + ardından 20-35ms'lik birkaç görev). Segment ikinci kez kaydırılınca takılma yok. Mockup gizlenince takılma tamamen kayboluyor.
+- **Fix:** `prewarmGpu()` — intro bitince (+200ms) mockup'ın görünmez kopyası (`opacity: 0.001`, body'de fixed) 3 kare + 100ms çizilip kaldırılır. Sayfa yüklenirken orijinal mockup'ı görünür yapmak işe yaramıyor (kart ekran dışında, tarayıcı çizmiyor).
+- **Sonuç:** en uzun kare 111-117ms → 22-28ms, GPU fazla süre ~140ms → 11-23ms.
+- **Görsel doğrulama:** 20 scroll noktasında ön ısıtmalı/ısıtmasız ekran görüntüleri piksel piksel aynı (sadece 1 karede 57 piksel, maks. 1/255 — aynı kodun iki çekimi arasındaki GPU gürültüsünden küçük). Kopya ekrandayken 4 sahnede 0 piksel fark.
+- S ikonunu da ön ısıtmak ek kazanç sağlamadı, eklenmedi.
+
+**S burst geri scroll bozulması (2026-09-17):** S ikonu büyüyüp telefona geçtikten sonra geri scroll edilince ikonun turuncu parıltısı dikdörtgen içinde kırpılıyordu. Oturum öncesinden beri vardı (commit edilmemiş `will-change`/`backface-visibility` satırları ile geldi; HEAD'de o satırlar yok ve hata yok).
+- **Sebep:** `.s-burst-icon`/`.burst-ring` `will-change` ile composited. Büyüme sonunda `autoAlpha: 0` → `visibility: hidden`, Chrome'un katmanın cull rect'ini 20x/7x scale'deyken yeniden hesaplamasını tetikliyor; will-change'li transform değişiklikleri cull rect'i güncellemediği için geri dönüşte eski (küçük) alan kullanılıyor.
+- **Fix:** scale 20 (ikon) ve scale 7 (halkalar) tween'lerinin bitişinde `autoAlpha: 0` yerine `opacity: 0`. Sadece ikon yetmiyor, ikisi de gerekli.
+- **will-change satırları KALDIRILMAMALI:** kaldırınca geri scroll düzeliyor ama S burst anında en uzun kare 22ms → 350ms oluyor.
+- **Doğrulama:** 20 noktada ileri/geri ekran görüntüleri — S burst aralığında (t 9.5–11.4) fark yok; ileri görüntü fix öncesiyle aynı (maks. 1/255); performans aynı.
+- Telefon bölümünde (t 12.6–16.8) ileri/geri arasında yazı kenarlarında küçük anti-aliasing farkı var; oturum öncesi kodda da birebir aynı, 4x büyütmede gözle görünmüyor.
+
+**Hâlâ pahalı ama görünümü değiştirmeden düzeltilemeyen şeyler:** S burst blur + scale 20 + drop-shadow, kart width/height animasyonu (box-shadow repaint), film grain `mix-blend-mode: overlay`, badge `backdrop-filter`, aurora blur.
+
+---
+
 ### Adım 6 — Static Export Yapılandırması
 `next.config.ts` güncellendi:
 - `output: "export"` — statik HTML/CSS/JS üretimi
@@ -212,3 +238,4 @@ docker compose -f /docker/n8n/docker-compose.yml restart servinas
 - [ ] App Store / Google Play linkleri placeholder — uygulama yayınlanınca güncellenecek
 - [ ] OG image (sosyal medya önizleme görseli) henüz yok
 - [ ] Canlı site güncellenmedi — aurora, CTA glow, sosyal linkler henüz deploy edilmedi
+- [ ] **BEKLEYEN (2026-09-17): Adım 8 performans düzeltmeleri commit/push/deploy edilmedi.** Kullanıcı "sonra yapacağız, hatırlat" dedi. Sıra: `npm run build` → commit → push → VPS (deploy sadece kullanıcı açıkça isteyince). Not: bu makinede `git` PATH'te yok.

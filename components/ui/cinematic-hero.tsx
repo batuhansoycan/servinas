@@ -8,8 +8,46 @@ import { cn } from "@/lib/utils";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
-  ScrollTrigger.normalizeScroll(true);
+  // Masaüstünde native scroll kalsın; normalizeScroll sadece dokunmatik cihazlarda (adres çubuğu zıplaması için)
+  ScrollTrigger.normalizeScroll(ScrollTrigger.isTouch === 1);
   gsap.ticker.lagSmoothing(false);
+}
+
+// GPU ön ısıtma: telefon mockup'ı ilk kez çizildiğinde GPU tek seferlik hazırlık işi
+// (shader derleme, önbellekler) yapıyor ve S ikonundan telefona geçişte 80-120ms takılmaya yol açıyor.
+// Sayfa sakinken mockup'ın görünmez (%0.1 opak — 8-bit renkte hiçbir pikseli değiştirmez) bir kopyası
+// birkaç kare çizilip kaldırılır; asıl animasyon geldiğinde bu iş zaten yapılmış olur.
+// Kart ekran dışındayken tarayıcı mockup'ı çizmediği için kopya body'ye, ekranın ortasına eklenir.
+function prewarmGpu(source: Element): () => void {
+  const host = document.createElement("div");
+  host.setAttribute("aria-hidden", "true");
+  host.inert = true;
+  Object.assign(host.style, {
+    position: "fixed", inset: "0", display: "flex", alignItems: "center", justifyContent: "center",
+    pointerEvents: "none", zIndex: "1", opacity: "0.001", perspective: "1500px",
+  });
+  const clone = source.cloneNode(true) as HTMLElement;
+  for (const el of [clone, ...clone.querySelectorAll<HTMLElement>("*")]) {
+    el.style.visibility = "visible";
+    if (el.style.opacity) el.style.opacity = "1";
+    if (el.style.transform) el.style.transform = "none";
+  }
+  host.appendChild(clone);
+  document.body.appendChild(host);
+
+  let raf = 0;
+  let timer = 0;
+  let frames = 0;
+  const tick = () => {
+    if (++frames < 3) raf = requestAnimationFrame(tick);
+    else timer = window.setTimeout(() => host.remove(), 100);
+  };
+  raf = requestAnimationFrame(tick);
+  return () => {
+    cancelAnimationFrame(raf);
+    clearTimeout(timer);
+    host.remove();
+  };
 }
 
 const INJECTED_STYLES = `
@@ -344,6 +382,8 @@ const INJECTED_STYLES = `
       justify-content: center;
       visibility: hidden;
       opacity: 0;
+      will-change: transform, opacity, filter;
+      backface-visibility: hidden;
   }
 
   .burst-ring {
@@ -351,6 +391,8 @@ const INJECTED_STYLES = `
       border-radius: 50%;
       visibility: hidden;
       opacity: 0;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -442,6 +484,8 @@ export function CinematicHero({
 
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
+    let cancelPrewarm: (() => void) | undefined;
+    let prewarmTimer = 0;
 
     const ctx = gsap.context(() => {
       gsap.set(".text-track", { autoAlpha: 0, y: 60, scale: 0.85, filter: "blur(20px)", rotationX: -20 });
@@ -456,7 +500,13 @@ export function CinematicHero({
       const introTl = gsap.timeline({ delay: 0.3 });
       introTl
         .to(".text-track", { duration: 1.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
-        .to(".text-days", { duration: 1.4, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=1.0");
+        .to(".text-days", { duration: 1.4, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=1.0")
+        .eventCallback("onComplete", () => {
+          prewarmTimer = window.setTimeout(() => {
+            const mockup = containerRef.current?.querySelector(".mockup-scroll-wrapper");
+            if (mockup) cancelPrewarm = prewarmGpu(mockup);
+          }, 200);
+        });
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -485,8 +535,11 @@ export function CinematicHero({
         .to(".stat-reveal-3", { y: -100, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, "+=0.5")
         // S burst
         .fromTo(".s-burst-icon", { scale: 0, autoAlpha: 0, filter: "blur(50px)" }, { scale: 1, autoAlpha: 1, filter: "blur(0px)", duration: 1, ease: "back.out(1.6)" })
-        .fromTo(".burst-ring", { scale: 1, autoAlpha: 0.9 }, { scale: 7, autoAlpha: 0, duration: 1.8, stagger: 0.25, ease: "power2.out" }, "-=0.6")
-        .to(".s-burst-icon", { scale: 20, autoAlpha: 0, filter: "blur(40px)", duration: 1, ease: "power3.in" }, "-=1.2")
+        // Büyüme sonunda autoAlpha değil opacity: autoAlpha 0 → visibility:hidden, Chrome'un will-change'li katmanın
+        // görünür alanını 20x/7x scale'deyken yeniden hesaplamasına yol açıyor; geri scroll'da parıltı dikdörtgen
+        // içinde kırpılıyordu. opacity:0 görünüşte aynı, ama o hesaplamayı tetiklemiyor.
+        .fromTo(".burst-ring", { scale: 1, autoAlpha: 0.9 }, { scale: 7, opacity: 0, duration: 1.8, stagger: 0.25, ease: "power2.out" }, "-=0.6")
+        .to(".s-burst-icon", { scale: 20, opacity: 0, filter: "blur(40px)", duration: 1, ease: "power3.in" }, "-=1.2")
         .to({}, { duration: 0.3 })
 
         .fromTo(".mockup-scroll-wrapper",
@@ -524,7 +577,11 @@ export function CinematicHero({
 
     }, containerRef);
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      clearTimeout(prewarmTimer);
+      cancelPrewarm?.();
+    };
   }, [metricValue]);
 
   return (
