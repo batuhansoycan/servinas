@@ -195,7 +195,7 @@ servinas-web/
 
 > **Sadece kullanıcı "deploy et" dediğinde uygulanır.**
 
-**Sunucu:** 72.61.91.117 — nginx:alpine + Traefik SSL
+**Sunucu:** 72.61.91.117 — Traefik SSL → host nginx :4000 (Docker container YOK)
 **GitHub:** https://github.com/batuhansoycan/servinas (master branch, `out/` dahil)
 **Site:** https://servinas.com — CANLI (2026-05-13'ten beri)
 
@@ -217,11 +217,11 @@ bash /tmp/servinas-web/scripts/setup-vps.sh
 # Güncelleme ise:
 cd /tmp && rm -rf servinas-web && git clone https://github.com/batuhansoycan/servinas.git servinas-web
 cp -r /tmp/servinas-web/out/. /var/www/servinas/
-docker compose -f /docker/servinas/docker-compose.yml restart servinas
+# Statik dosya — restart gerekmez. nginx ayarı değiştiyse: bash /tmp/servinas-web/scripts/setup-vps.sh
 ```
 
-- servinas kendi compose projesinde: `/docker/servinas/docker-compose.yml` (repoda `deploy/docker-compose.yml`). Traefik'e ulaşmak için `n8n_default` network'üne external olarak katılır — bu satır silinirse site düşer.
-- nginx ayarı `/var/www/servinas-nginx.conf` olarak mount edilir (repoda `nginx/default.conf`). Değiştirince kopyala + restart.
+- Zincir: Traefik (443) → `/docker/n8n/traefik-dynamic/servinas.yml` → host nginx `:4000` (`/etc/nginx/sites-available/servinas`, repoda `nginx/default.conf`) → `/var/www/servinas`.
+- servinas için Docker label/container EKLEME: aynı Host kuralıyla ikinci bir Traefik router oluşur, Traefik ikisi arasında keyfi seçer (2026-09-28 bu yüzden container kaldırıldı).
 - Hostinger terminali yapıştırmada ilk harfi yutabiliyor; komutları tek satır ver.
 
 ---

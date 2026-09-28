@@ -1,24 +1,21 @@
 #!/bin/bash
 set -e
 
+# Zincir: Traefik (443) -> /docker/n8n/traefik-dynamic/servinas.yml -> host nginx :4000 -> /var/www/servinas
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-COMPOSE_DIR="/docker/servinas"
 WEB_DIR="/var/www/servinas"
-NGINX_CONF="/var/www/servinas-nginx.conf"
+NGINX_SITE="/etc/nginx/sites-available/servinas"
 
 echo "→ Web dizini oluşturuluyor..."
 mkdir -p "$WEB_DIR"
 
-echo "→ Nginx config kopyalanıyor..."
-cp "$REPO_DIR/nginx/default.conf" "$NGINX_CONF"
+echo "→ Nginx site ayarı kopyalanıyor..."
+cp "$REPO_DIR/nginx/default.conf" "$NGINX_SITE"
+ln -sf "$NGINX_SITE" /etc/nginx/sites-enabled/servinas
 
-# servinas kendi compose projesinde durur; n8n'in compose dosyasına eklenmez.
-echo "→ docker-compose kopyalanıyor..."
-mkdir -p "$COMPOSE_DIR"
-cp "$REPO_DIR/deploy/docker-compose.yml" "$COMPOSE_DIR/docker-compose.yml"
-
-echo "→ Container başlatılıyor..."
-docker compose -f "$COMPOSE_DIR/docker-compose.yml" up -d
+echo "→ Nginx test + reload..."
+nginx -t
+systemctl reload nginx
 
 echo ""
 echo "✓ Tamamlandı! https://servinas.com kontrol et."
