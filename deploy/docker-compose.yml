@@ -1,0 +1,23 @@
+# Sunucuda /docker/servinas/docker-compose.yml olarak durur.
+# Traefik n8n compose projesinde çalışıyor; servinas onun network'üne
+# (n8n_default) katılmazsa Traefik container'a ulaşamaz ve site düşer.
+services:
+  servinas:
+    image: nginx:alpine
+    container_name: servinas
+    restart: always
+    volumes:
+      - /var/www/servinas:/usr/share/nginx/html:ro
+      - /var/www/servinas-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servinas.rule=Host(`servinas.com`) || Host(`www.servinas.com`)"
+      - "traefik.http.routers.servinas.tls=true"
+      - "traefik.http.routers.servinas.entrypoints=websecure"
+      - "traefik.http.routers.servinas.tls.certresolver=mytlschallenge"
+    networks:
+      - n8n_default
+
+networks:
+  n8n_default:
+    external: true

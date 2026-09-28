@@ -217,8 +217,12 @@ bash /tmp/servinas-web/scripts/setup-vps.sh
 # Güncelleme ise:
 cd /tmp && rm -rf servinas-web && git clone https://github.com/batuhansoycan/servinas.git servinas-web
 cp -r /tmp/servinas-web/out/. /var/www/servinas/
-docker compose -f /docker/n8n/docker-compose.yml restart servinas
+docker compose -f /docker/servinas/docker-compose.yml restart servinas
 ```
+
+- servinas kendi compose projesinde: `/docker/servinas/docker-compose.yml` (repoda `deploy/docker-compose.yml`). Traefik'e ulaşmak için `n8n_default` network'üne external olarak katılır — bu satır silinirse site düşer.
+- nginx ayarı `/var/www/servinas-nginx.conf` olarak mount edilir (repoda `nginx/default.conf`). Değiştirince kopyala + restart.
+- Hostinger terminali yapıştırmada ilk harfi yutabiliyor; komutları tek satır ver.
 
 ---
 
@@ -237,5 +241,4 @@ docker compose -f /docker/n8n/docker-compose.yml restart servinas
 - [ ] `prefers-reduced-motion` desteği yok (erişilebilirlik)
 - [ ] App Store / Google Play linkleri placeholder — uygulama yayınlanınca güncellenecek
 - [ ] OG image (sosyal medya önizleme görseli) henüz yok
-- [ ] Canlı site güncellenmedi — aurora, CTA glow, sosyal linkler henüz deploy edilmedi
-- [ ] **BEKLEYEN (2026-09-17): Adım 8 performans düzeltmeleri commit/push/deploy edilmedi.** Kullanıcı "sonra yapacağız, hatırlat" dedi. Sıra: `npm run build` → commit → push → VPS (deploy sadece kullanıcı açıkça isteyince). Not: bu makinede `git` PATH'te yok.
+- [x] Performans düzeltmeleri canlıda (59f0816, 2026-09-21)

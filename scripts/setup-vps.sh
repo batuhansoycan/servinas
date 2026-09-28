@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-COMPOSE_FILE="/docker/n8n/docker-compose.yml"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+COMPOSE_DIR="/docker/servinas"
 WEB_DIR="/var/www/servinas"
 NGINX_CONF="/var/www/servinas-nginx.conf"
 
@@ -9,34 +10,15 @@ echo "→ Web dizini oluşturuluyor..."
 mkdir -p "$WEB_DIR"
 
 echo "→ Nginx config kopyalanıyor..."
-cp "$(dirname "$0")/../nginx/default.conf" "$NGINX_CONF"
+cp "$REPO_DIR/nginx/default.conf" "$NGINX_CONF"
 
-echo "→ docker-compose kontrol ediliyor..."
-if grep -q "container_name: servinas" "$COMPOSE_FILE" 2>/dev/null; then
-  echo "  servinas service zaten mevcut, atlanıyor."
-else
-  echo "  servinas service ekleniyor..."
-  cat >> "$COMPOSE_FILE" << 'SERVICE_BLOCK'
-
-  servinas:
-    image: nginx:alpine
-    container_name: servinas
-    restart: always
-    volumes:
-      - /var/www/servinas:/usr/share/nginx/html:ro
-      - /var/www/servinas-nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.servinas.rule=Host(`servinas.com`) || Host(`www.servinas.com`)"
-      - "traefik.http.routers.servinas.tls=true"
-      - "traefik.http.routers.servinas.entrypoints=websecure"
-      - "traefik.http.routers.servinas.tls.certresolver=mytlschallenge"
-SERVICE_BLOCK
-  echo "  eklendi."
-fi
+# servinas kendi compose projesinde durur; n8n'in compose dosyasına eklenmez.
+echo "→ docker-compose kopyalanıyor..."
+mkdir -p "$COMPOSE_DIR"
+cp "$REPO_DIR/deploy/docker-compose.yml" "$COMPOSE_DIR/docker-compose.yml"
 
 echo "→ Container başlatılıyor..."
-cd /docker/n8n && docker compose up -d servinas
+docker compose -f "$COMPOSE_DIR/docker-compose.yml" up -d
 
 echo ""
 echo "✓ Tamamlandı! https://servinas.com kontrol et."
